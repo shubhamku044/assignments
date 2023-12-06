@@ -135,6 +135,4 @@ class Calculator {
   }
 }
 
-console.log(new Calculator().calculate("(2.5 + 1.5) * 3"));
-
 module.exports = Calculator;
