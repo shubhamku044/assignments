@@ -16,6 +16,125 @@
   Once you've implemented the logic, test your code by running
 */
 
-class Calculator {}
+class Calculator {
+  constructor() {
+    this.result = 0;
+  }
+  add(num) {
+    this.result += num;
+  }
+  subtract(num) {
+    this.result -= num;
+  }
+  multiply(num) {
+    this.result *= num;
+  }
+  divide(num) {
+    if (num === 0) throw Error("Division by zero");
+    this.result /= num;
+  }
+  clear() {
+    this.result = 0;
+  }
+  getResult() {
+    return this.result;
+  }
+
+  isValidString(str) {
+    const validCharacter = /[^0-9+\-*/().]/;
+    const leftParen = str.match(/\(/g) ? str.match(/\(/g).length : 0;
+    const rightParen = str.match(/\)/g) ? str.match(/\)/g).length : 0;
+
+    return !validCharacter.test(str) && leftParen === rightParen;
+  }
+
+  extractNumber(expression, operator) {
+    const regex = new RegExp(`([\\d.]+)\\${operator}([\\d.]+)`);
+    const match = expression.match(regex);
+
+    if (match) {
+      const leftNumber = match[1];
+      const rightNumber = match[2];
+
+      const leftValue = parseFloat(leftNumber);
+      const rightValue = parseFloat(rightNumber);
+
+      return { leftValue, rightValue };
+    }
+
+    return null;
+  }
+
+  calculateSimpleExpression(str) {
+    let ans = 0;
+
+    const noOfOperations = str.match(/[+\-*/]/g)
+      ? str.match(/[+\-*/]/g).length
+      : 0;
+
+    if (!noOfOperations) return parseFloat(str);
+
+    for (let i = 0; i < noOfOperations; i++) {
+      ans = 0;
+      let operator = "";
+      if (this.extractNumber(str, "/")) operator = "/";
+      else if (this.extractNumber(str, "*")) operator = "*";
+      else if (this.extractNumber(str, "+")) operator = "+";
+      else if (this.extractNumber(str, "-")) operator = "-";
+      const res = this.extractNumber(str, operator);
+      if (res) {
+        switch (operator) {
+          case "/":
+            if (res.rightValue === 0) throw Error();
+            ans += res.leftValue / res.rightValue;
+            break;
+          case "*":
+            ans += res.leftValue * res.rightValue;
+            break;
+          case "+":
+            ans += res.leftValue + res.rightValue;
+            break;
+          case "-":
+            ans += res.leftValue - res.rightValue;
+            break;
+          default:
+            break;
+        }
+      }
+      str = str.replace(
+        `${res.leftValue}${operator}${res.rightValue}`,
+        `${ans}`
+      );
+    }
+
+    return ans;
+  }
+
+  calculate(str) {
+    str = str.trim().replace(/ +/g, "");
+    if (!this.isValidString(str)) throw Error();
+
+    while (str.includes("(") && str.includes(")")) {
+      const idxOfLeftParen = str.lastIndexOf("(");
+      const idxOfRightParen =
+        str.slice(idxOfLeftParen, str.length).indexOf(")") + idxOfLeftParen;
+      if (idxOfRightParen < idxOfLeftParen) throw Error("wrong parenthesis");
+      const newExpr = str.slice(idxOfLeftParen + 1, idxOfRightParen);
+      const ans = this.calculateSimpleExpression(newExpr);
+      str = str.replace(str.slice(idxOfLeftParen, idxOfRightParen + 1), ans);
+    }
+
+    let finalResult = this.calculateSimpleExpression(str);
+    this.result = finalResult;
+    if (finalResult !== Math.floor(finalResult)) return finalResult;
+
+    this.finalResult = parseFloat(
+      finalResult.toFixed(2).replace(/[.,]00$/, "")
+    );
+    return this.finalResult;
+  }
+}
+
+console.log(new Calculator().calculate("(2.5 + 1.5) * 3"));
 
 module.exports = Calculator;
