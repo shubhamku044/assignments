@@ -39,11 +39,96 @@
 
   Testing the server - run `npm run test-todoServer` command in terminal
  */
-  const express = require('express');
-  const bodyParser = require('body-parser');
-  
-  const app = express();
-  
-  app.use(bodyParser.json());
-  
-  module.exports = app;
+const express = require("express");
+const bodyParser = require("body-parser");
+const uuid = require("uuid");
+const fs = require('fs')
+
+const getRandomId = () => uuid.v4();
+
+const app = express();
+
+app.use(bodyParser.json());
+
+
+app.get("/todos", (req, res) => {
+  fs.readFile("todos.json", "utf-8", (err, data) => err ?
+    res.status(500).json({ message: 'Something went wrong', err }) :
+    res.status(200).json(JSON.parse(data)));
+});
+
+app.get("/todos/:id", (req, res) => {
+  fs.readFile("todos.json", "utf-8", (err, data) => {
+    if (err) res.status(500).json({ message: 'Something went wrong', err });
+    const todos = JSON.parse(data);
+    const id = req.params.id;
+    const todo = todos.find((todo) => todo.id === id);
+    if (!todo) res.status(404).send('todo not found')
+    res.status(200).json(todo);
+  });
+});
+
+app.post("/todos", (req, res) => {
+
+  fs.readFile("todos.json", "utf-8", (err, data) => {
+    if (err) res.status(500).json({ message: 'Something went wrong', err });
+    const todos = JSON.parse(data);
+    const { title, description } = req.body;
+    // if ([title, description].some((field) => !field)) res.status(404).send("All fields are required");
+    const todo = {
+      id: getRandomId(),
+      title: title || "title",
+      description: description || "description",
+    }
+    todos.push(todo);
+
+    fs.writeFile("todos.json", JSON.stringify(todos), (err) => {
+      if (err) res.status(500).json({ message: 'Something went wrong', err });
+      res.status(201).json(todo);
+    });
+  });
+});
+
+app.put("/todos/:id", (req, res) => {
+  const { completed, title, description } = req.body;
+  fs.readFile('todos.json', 'utf-8', (err, data) => {
+    if (err) res.status(500).json({ message: 'Something went wrong', err });
+    const todos = JSON.parse(data);
+    const id = req.params.id;
+    const todo = todos.find((todo) => todo.id === id)
+
+    todos.forEach((val) => {
+      if (todo == val) {
+        if (completed) val.completed = completed;
+        if (title) val.title = title;
+        if (description) val.description = description;
+      }
+    })
+
+    fs.writeFile("todos.json", JSON.stringify(todos), (err) => {
+      if (err) res.status(500).json({ message: 'Something went wrong', err });
+      res.status(200).json({ todo })
+    })
+  })
+});
+
+app.delete("/todos/:id", (req, res) => {
+
+  fs.readFile('todos.json', 'utf-8', (err, data) => {
+    if (err) res.status(500).json({ message: 'Something went wrong', err });
+    let todos = JSON.parse(data);
+    const id = req.params.id;
+    const todo = todos.find((todo) => todo.id === id)
+
+    todos = todos.filter((item) => item.id !== todo?.id)
+
+    fs.writeFile("todos.json", JSON.stringify(todos), (err) => {
+      if (err) res.status(500).json({ message: 'Something went wrong', err });
+      res.status(200).json({ todo })
+    })
+  })
+});
+
+// app.listen(3000, () => console.log('listining on 3000'))
+
+module.exports = app;
