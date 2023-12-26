@@ -13,17 +13,17 @@ describe('GET /user', function() {
   });
 
   it('10 more requests log 12', function() {
-          for (let i = 0; i<10; i++) {
-            request(app)
-                  .get('/user')
-                  .then();
-          }
-          request(app)
-              .get('/requestCount')
-              .then(response => {
-                expect(response.body.requestCount).toBe(12);
-                done();
-              })
-      });
+    for (let i = 0; i < 10; i++) {
+      request(app)
+        .get('/user')
+        .then();
+    }
+    request(app)
+      .get('/requestCount')
+      .then(response => {
+        expect(response.body.requestCount).toBe(12);
+        done();
+      })
+  });
 });
 
